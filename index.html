@@ -30,15 +30,19 @@
     // }
 
 
-    navigator.mediaDevices.getUserMedia({
-            // video: true
-            video: { facingMode: { exact: "environment" } }
-        })
+    const constrains = {
+        video: {
+            facingMode: {
+                exact: "environment"
+            }
+        }
+    }
+    navigator.mediaDevices.getUserMedia(constrains)
         .then(stream => {
             video.srcObject = stream;
             video.play();
 
-            // Draw the video frame onto the canvas every 100ms
+            // Draw the video frame onto the canvas every 2000ms
             setInterval(() => {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
             }, 2000);
