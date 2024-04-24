@@ -10,7 +10,7 @@
 
 <body>
     <!--для отображения изображения с камеры-->
-    <video id="video" width="640" height="480" autoplay></video>
+    <video id="video" autoplay></video>
     <canvas id="qrcode"></canvas>
 </body>
 <script>
@@ -31,7 +31,8 @@
 
 
     navigator.mediaDevices.getUserMedia({
-            video: true
+            // video: true
+            video: { facingMode: { exact: "environment" } }
         })
         .then(stream => {
             video.srcObject = stream;
