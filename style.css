@@ -4,4 +4,5 @@
 #qrcode {
     width: 100vw;
     border: 3px solid #ccc;
+    margin-top: -40%;
 }
