@@ -32,9 +32,9 @@
 
     const constrains = {
         video: {
-            facingMode: {
-                exact: "environment"
-            }
+            facingMode: { exact: "environment" },
+            width: { min: 1280 },
+            height: { min: 720 },
         }
     }
     navigator.mediaDevices.getUserMedia(constrains)
