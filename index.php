@@ -18,16 +18,16 @@
     const canvas = document.getElementById('qrcode');
     const context = canvas.getContext('2d');
 
-    const img = new Image();
-    img.onload = drawImageActualSize;
-    img.src = 'img3.jpg';
+    // const img = new Image();
+    // img.onload = drawImageActualSize;
+    // img.src = 'img3.jpg';
 
-    function drawImageActualSize() {
-        canvas.width = this.naturalWidth;
-        canvas.height = this.naturalHeight;
-        context.drawImage(this, 0, 0);
-        // context.drawImage(this, 0, 0, this.width, this.height);
-    }
+    // function drawImageActualSize() {
+    //     canvas.width = this.naturalWidth;
+    //     canvas.height = this.naturalHeight;
+    //     context.drawImage(this, 0, 0);
+    //     // context.drawImage(this, 0, 0, this.width, this.height);
+    // }
 
 
     navigator.mediaDevices.getUserMedia({
