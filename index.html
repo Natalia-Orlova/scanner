@@ -87,6 +87,7 @@
         console.log(`Code matched = ${decodedText}`, decodedResult);
         const text = document.createElement('p');
         text.textContent = `Code matched = ${decodedText}`, decodedResult;
+        document.appendChild(text);
     }
 
     function onScanFailure(error) {
