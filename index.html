@@ -14,6 +14,7 @@
     <canvas id="qrcode"></canvas> -->
     <div id="reader" width="600px"></div>
     <div class="result"></div>
+    <input type="text" id="result" style="display: none">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </body>
 <script>
@@ -83,46 +84,91 @@
     //         };
     //     });
 
-    //     function onScanSuccess(decodedText, decodedResult) {
-    //         // handle the scanned code as you like, for example:
-    //         console.log(`Code matched = ${decodedText}`, decodedResult);
-    //         const result = document.querySelector('.result');
-    //         result.textContent = `Code matched = ${decodedText}`;
-    //     }
+    // function onScanSuccess(decodedText, decodedResult) {
+    //     // handle the scanned code as you like, for example:
+    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
+    //     const result = document.querySelector('.result');
+    //     result.textContent = decodedText;
 
-    //     function onScanFailure(error) {
-    //         // handle scan failure, usually better to ignore and keep scanning.
-    //         // for example:
-    //         console.warn(`Code scan error = ${error}`);
-    //     }
+    //     const resultInput = document.querySelector('#result');
+    //     resultInput.value = decodedText;
+    //     uploadText();
+    // }
 
-    //     let html5QrcodeScanner = new Html5QrcodeScanner(
-    //         "reader",
-    //         { fps: 10, qrbox: { width: 500, height: 500 } },
+    // function onScanFailure(error) {
+    //     // handle scan failure, usually better to ignore and keep scanning.
+    //     // for example:
+    //     console.warn(`Code scan error = ${error}`);
+    // }
+
+    // let html5QrcodeScanner = new Html5QrcodeScanner(
+    //     "reader",
+    //     { fps: 10, qrbox: { width: 500, height: 500 } },
     //   /* verbose= */ false);
-    //     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
     const html5QrCode = new Html5Qrcode("reader");
     const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        /* handle success */
         const result = document.querySelector('.result');
         result.textContent = `Code matched = ${decodedText}`;
     };
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    const config = { fps: 10, qrbox: { width: 500, height: 500 } };
 
     // If you want to prefer back camera
     html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
 
     // Select back camera or fail with `OverconstrainedError`.
     html5QrCode.start({ facingMode: { exact: "environment" } }, config, qrCodeSuccessCallback);
-
     
+    uploadText();
+
+
     html5QrCode.stop().then((ignore) => {
         // QR Code scanning is stopped.
     }).catch((err) => {
         // Stop failed, handle it.
     });
+
+
+
+    function uploadText() {
+
+        // Get the text data from the input field
+        const textData = document.querySelector('#result').value;
+        const test = document.createElement('div');
+        test.textContent = textData;
+        body.appendChild(test);
+
+        // Create a new XMLHttpRequest object
+        const xhr = new XMLHttpRequest();
+
+        // Set the HTTP method and the URL
+        xhr.open("POST", "upload.php");
+
+        // Set the responseType to text, so that xhr.response is a string
+        xhr.responseType = "text";
+
+        // Set the request header to send JSON data
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+        // Define the onload event handler
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                // If the request is successful, display the server's response
+                console.log(xhr.response);
+
+            } else {
+                // If the request is not successful, display the error
+                console.log("Error: " + xhr.status);
+            }
+        };
+
+        // Send the request with the text data
+        xhr.send(JSON.stringify({ text: textData }));
+    }
+
+
 </script>
 
 </html>
