@@ -13,6 +13,7 @@
     <!-- <video id="video" autoplay></video>
     <canvas id="qrcode"></canvas> -->
     <div id="reader" width="600px"></div>
+    <div class="result"></div>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </body>
 <script>
@@ -85,9 +86,8 @@
     function onScanSuccess(decodedText, decodedResult) {
         // handle the scanned code as you like, for example:
         console.log(`Code matched = ${decodedText}`, decodedResult);
-        const text = document.createElement('p');
-        text.textContent = `Code matched = ${decodedText}`, decodedResult;
-        body.appendChild(text);
+        const result = document.querySelector('.result');
+        result.textContent = `Code matched = ${decodedText}`, decodedResult;
     }
 
     function onScanFailure(error) {
