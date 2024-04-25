@@ -17,6 +17,7 @@
     const video = document.getElementById('video');
     const canvas = document.getElementById('qrcode');
     const context = canvas.getContext('2d');
+    const jpegDataURL = canvas.toDataURL('image/jpeg'); // преобразовать в jpeg
 
     // const img = new Image();
     // img.onload = drawImageActualSize;

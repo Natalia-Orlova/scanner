@@ -1,5 +1,6 @@
 #video {
     width: 100%;
+    display: none;
 }
 #qrcode {
     width: 100%;
