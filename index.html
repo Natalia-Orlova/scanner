@@ -83,24 +83,46 @@
     //         };
     //     });
 
-    function onScanSuccess(decodedText, decodedResult) {
-        // handle the scanned code as you like, for example:
-        console.log(`Code matched = ${decodedText}`, decodedResult);
+    //     function onScanSuccess(decodedText, decodedResult) {
+    //         // handle the scanned code as you like, for example:
+    //         console.log(`Code matched = ${decodedText}`, decodedResult);
+    //         const result = document.querySelector('.result');
+    //         result.textContent = `Code matched = ${decodedText}`;
+    //     }
+
+    //     function onScanFailure(error) {
+    //         // handle scan failure, usually better to ignore and keep scanning.
+    //         // for example:
+    //         console.warn(`Code scan error = ${error}`);
+    //     }
+
+    //     let html5QrcodeScanner = new Html5QrcodeScanner(
+    //         "reader",
+    //         { fps: 10, qrbox: { width: 500, height: 500 } },
+    //   /* verbose= */ false);
+    //     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+
+    const html5QrCode = new Html5Qrcode("reader");
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        /* handle success */
         const result = document.querySelector('.result');
-        result.textContent = `Code matched = ${decodedText}, ${decodedResult}`;
-    }
+        result.textContent = `Code matched = ${decodedText}`;
+    };
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // for example:
-        console.warn(`Code scan error = ${error}`);
-    }
+    // If you want to prefer back camera
+    html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 500, height: 500 } },
-  /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    // Select back camera or fail with `OverconstrainedError`.
+    html5QrCode.start({ facingMode: { exact: "environment" } }, config, qrCodeSuccessCallback);
+
+    
+    html5QrCode.stop().then((ignore) => {
+        // QR Code scanning is stopped.
+    }).catch((err) => {
+        // Stop failed, handle it.
+    });
 </script>
 
 </html>
