@@ -10,14 +10,16 @@
 
 <body>
     <!--для отображения изображения с камеры-->
-    <video id="video" autoplay></video>
-    <canvas id="qrcode"></canvas>
+    <!-- <video id="video" autoplay></video>
+    <canvas id="qrcode"></canvas> -->
+    <div id="reader" width="600px"></div>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </body>
 <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('qrcode');
-    const context = canvas.getContext('2d');
-    const jpegDataURL = canvas.toDataURL('image/jpeg'); // преобразовать в jpeg
+    // const video = document.getElementById('video');
+    // const canvas = document.getElementById('qrcode');
+    // const context = canvas.getContext('2d');
+    // const jpegDataURL = canvas.toDataURL('image/jpeg'); // преобразовать в jpeg
 
     // const img = new Image();
     // img.onload = drawImageActualSize;
@@ -31,26 +33,71 @@
     // }
 
 
-    const constrains = {
-        video: {
-            facingMode: { exact: "environment" },
-            // width: { min: 1280 },
-            // height: { min: 720 },
-        }
-    }
-    navigator.mediaDevices.getUserMedia(constrains)
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
+    // const constrains = {
+    //     video: {
+    //         facingMode: { exact: "environment" },
+    //         // width: { min: 1280 },
+    //         // height: { min: 720 },
+    //     }
+    // }
+    // navigator.mediaDevices.getUserMedia(constrains)
+    //     .then(stream => {
+    //         video.srcObject = stream;
+    //         video.play();
 
-            // Draw the video frame onto the canvas every 2000ms
-            setInterval(() => {
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            }, 2000);
-        })
-        .catch(error => {
-            console.log('Error accessing camera:', error);
-        });
+    //         // Draw the video frame onto the canvas every 2000ms
+    //         setInterval(() => {
+    //             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    //         }, 2000);
+    //     })
+    //     .catch(error => {
+    //         console.log('Error accessing camera:', error);
+    //     });
+
+
+    // navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    //     .then(function (stream) {
+    //         // Create a video element and attach the stream to it
+    //         var video = document.createElement('video');
+    //         video.setAttribute('id', 'video');
+    //         video.srcObject = stream;
+    //         video.play();
+
+    //         // After the video starts playing, take a snapshot
+    //         video.onplayed = function (ev) {
+    //             setTimeout(function () {
+    //                 // Take a snapshot and convert it to a Blob
+    //                 var canvas = document.createElement('canvas');
+    //                 canvas.setAttribute('id', 'qrcode');
+    //                 canvas.width = video.videoWidth;
+    //                 canvas.height = video.videoHeight;
+    //                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    //                 var imageBlob = new Blob([canvas.toDataURL('image/jpeg').split(',')[1]], { type: 'image/jpeg' });
+
+    //                 // Send the image to the server
+    //                 var xhr = new XMLHttpRequest();
+    //                 xhr.open('POST', 'http://your-server.com/upload', true);
+    //                 xhr.send(imageBlob);
+    //             }, 1000);
+    //         };
+    //     });
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // handle the scanned code as you like, for example:
+        console.log(`Code matched = ${decodedText}`, decodedResult);
+    }
+
+    function onScanFailure(error) {
+        // handle scan failure, usually better to ignore and keep scanning.
+        // for example:
+        console.warn(`Code scan error = ${error}`);
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+  /* verbose= */ false);
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 </script>
 
 </html>
