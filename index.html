@@ -84,53 +84,57 @@
     //         };
     //     });
 
-    // function onScanSuccess(decodedText, decodedResult) {
-    //     // handle the scanned code as you like, for example:
-    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
-    //     const result = document.querySelector('.result');
-    //     result.textContent = decodedText;
 
-    //     const resultInput = document.querySelector('#result');
-    //     resultInput.value = decodedText;
-    //     uploadText();
-    // }
-
-    // function onScanFailure(error) {
-    //     // handle scan failure, usually better to ignore and keep scanning.
-    //     // for example:
-    //     console.warn(`Code scan error = ${error}`);
-    // }
-
-    // let html5QrcodeScanner = new Html5QrcodeScanner(
-    //     "reader",
-    //     { fps: 10, qrbox: { width: 500, height: 500 } },
-    //   /* verbose= */ false);
-    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-
-
-    const html5QrCode = new Html5Qrcode("reader");
-    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+    // с возможностью загрузить картинку кода
+    function onScanSuccess(decodedText, decodedResult) {
+        // handle the scanned code as you like, for example:
+        // console.log(`Code matched = ${decodedText}`, decodedResult);
         const result = document.querySelector('.result');
         result.textContent = decodedText;
 
         const resultInput = document.querySelector('#result');
         resultInput.value = decodedText;
-        // uploadText();
-    };
-    const config = { fps: 10, qrbox: { width: 500, height: 500 } };
+        uploadText();
+    }
 
-    // If you want to prefer back camera
-    html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+    function onScanFailure(error) {
+        // handle scan failure, usually better to ignore and keep scanning.
+        // for example:
+        console.warn(`Code scan error = ${error}`);
+    }
 
-    // Select back camera or fail with `OverconstrainedError`.
-    html5QrCode.start({ facingMode: { exact: "environment" } }, config, qrCodeSuccessCallback);
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 500, height: 500 } },
+      /* verbose= */ false);
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
-    html5QrCode.stop().then((ignore) => {
-        // QR Code scanning is stopped.
-    }).catch((err) => {
-        // Stop failed, handle it.
-    });
+
+
+    // const html5QrCode = new Html5Qrcode("reader");
+    // const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+    //     const result = document.querySelector('.result');
+    //     result.textContent = decodedText;
+
+    //     const resultInput = document.querySelector('#result');
+    //     resultInput.value = decodedText;
+    //     // uploadText();
+    // };
+    // const config = { fps: 10, qrbox: { width: 500, height: 500 } };
+
+    // // If you want to prefer back camera
+    // html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+
+    // // Select back camera or fail with `OverconstrainedError`.
+    // html5QrCode.start({ facingMode: { exact: "environment" } }, config, qrCodeSuccessCallback);
+
+
+    // html5QrCode.stop().then((ignore) => {
+    //     // QR Code scanning is stopped.
+    // }).catch((err) => {
+    //     // Stop failed, handle it.
+    // });
 
 
 
