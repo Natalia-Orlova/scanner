@@ -111,7 +111,7 @@
     const html5QrCode = new Html5Qrcode("reader");
     const qrCodeSuccessCallback = (decodedText, decodedResult) => {
         const result = document.querySelector('.result');
-        result.textContent = `Code matched = ${decodedText}`;
+        result.textContent = decodedText;
 
         const resultInput = document.querySelector('#result');
         resultInput.value = decodedText;
