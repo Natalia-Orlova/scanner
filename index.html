@@ -169,7 +169,7 @@
                 // If the request is not successful, display the error
                 console.log("Error: " + xhr.status);
                 
-                test.textContent = `Ошибка: ${xhr.response}`;
+                test.textContent = `Ошибка: ${xhr.status}`;
                 res.appendChild(test);
             }
         };
