@@ -163,14 +163,14 @@
                 console.log(xhr.response);
 
                 test.textContent = xhr.response;
-                res.appendChild(`test: ${test}`);
+                res.appendChild(test);
 
             } else {
                 // If the request is not successful, display the error
                 console.log("Error: " + xhr.status);
                 
                 test.textContent = `Ошибка: ${xhr.status}`;
-                res.appendChild(`test: ${test}`);
+                res.appendChild(test);
             }
         };
 
