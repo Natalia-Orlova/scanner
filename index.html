@@ -140,10 +140,6 @@
 
         // Get the text data from the input field
         const textData = document.querySelector('#result').value;
-        const res = document.querySelector('.result');
-        const test = document.createElement('div');
-        test.textContent = textData;
-        res.appendChild(test);
 
         // Create a new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
@@ -162,6 +158,11 @@
             if (xhr.status === 200) {
                 // If the request is successful, display the server's response
                 console.log(xhr.response);
+
+                const res = document.querySelector('.result');
+                const test = document.createElement('div');
+                test.textContent = textData;
+                res.appendChild(`test: ${test}`);
 
             } else {
                 // If the request is not successful, display the error
