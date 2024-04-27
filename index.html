@@ -145,9 +145,6 @@
         // Get the text data from the input field
         const textData = document.querySelector('#result').value;
 
-        const res = document.querySelector('.result');
-        const test = document.createElement('div');
-
         // Create a new XMLHttpRequest object
         const xhr = new XMLHttpRequest();
 
@@ -165,24 +162,15 @@
             if (xhr.status === 200) {
                 // If the request is successful, display the server's response
                 console.log(xhr.response);
-
-                test.textContent = xhr.response;
-                res.appendChild(test);
-
             } else {
                 // If the request is not successful, display the error
                 console.log("Error: " + xhr.status);
-                
-                test.textContent = `Ошибка: ${xhr.status}`;
-                res.appendChild(test);
             }
         };
 
         // Send the request with the text data
         xhr.send(JSON.stringify({ text: textData }));
     }
-
-
 </script>
 
 </html>
