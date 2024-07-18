@@ -93,7 +93,7 @@
         if (isReceipt(decodedText)) {
             result.textContent = decodedText;
         } else {
-            result.textContent = 'Этот qr-код не от чека';
+            result.textContent = `Этот qr-код не от чека: ${decodedText}`;
         }
 
         const resultInput = document.querySelector('#result');
@@ -177,7 +177,7 @@
     // Функция для проверки, является ли содержимое чеком
     function isReceipt(content) {
         // Регулярное выражение для проверки формата чека
-        const receiptPattern = /^t=\d{8}T\d{4}&s=\d+(\.\d{2})?&fn=\d+&i=\d+&fp=\d+&n=\d+$/;
+        const receiptPattern = /^t=\d{8}T\d{4}(\d{2})?&s=\d+(\.\d{2})?&fn=\d+&i=\d+&fp=\d+&n=\d+$/;
         return receiptPattern.test(content);
     }
 </script>

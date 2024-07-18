@@ -9,9 +9,10 @@
 
 
 .result {
-    max-width: 600px;
+    width: 80%;
     margin: 0 auto;
     text-align: center;
     font-size: 20px;
     margin-top: 36px;
+    word-wrap: break-word;
 }
