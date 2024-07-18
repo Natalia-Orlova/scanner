@@ -90,7 +90,11 @@
         // handle the scanned code as you like, for example:
         // console.log(`Code matched = ${decodedText}`, decodedResult);
         const result = document.querySelector('.result');
-        result.textContent = decodedText;
+        if (isReceipt(decodedText)) {
+            result.textContent = decodedText;
+        } else {
+            result.textContent = 'Этот qr-код не от чека';
+        }
 
         const resultInput = document.querySelector('#result');
         resultInput.value = decodedText;
@@ -167,6 +171,14 @@
 
         // Send the request with the text data
         xhr.send(JSON.stringify({ text: textData }));
+    }
+
+
+    // Функция для проверки, является ли содержимое чеком
+    function isReceipt(content) {
+        // Регулярное выражение для проверки формата чека
+        const receiptPattern = /^t=\d{8}T\d{4}&s=\d+(\.\d{2})?&fn=\d+&i=\d+&fp=\d+&n=\d+$/;
+        return receiptPattern.test(content);
     }
 </script>
 
