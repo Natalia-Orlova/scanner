@@ -120,6 +120,8 @@
 
 
 
+    
+
     function onScanSuccess(decodedText, decodedResult) {
     const result = document.querySelector('.result');
     if (isReceipt(decodedText)) {
@@ -144,32 +146,37 @@ let html5QrcodeScanner = new Html5QrcodeScanner(
 
 // Функция для выбора задней камеры и установки разрешения
 function setupCamera() {
-    Html5Qrcode.getCameras().then(devices => {
-        /**
-         * devices would be an array of objects of type:
-         * { id: "id", label: "label" }
-         */
-        if (devices && devices.length) {
-            // Предположим, что задняя камера обычно является второй в списке
-            const backCamera = devices[0]; // Это может быть не всегда верно, зависит от устройства
-            html5QrcodeScanner.clear().then(() => {
-                html5QrcodeScanner.start(
-                    backCamera.id,
-                    {
-                        fps: 10,
-                        qrbox: { width: 500, height: 500 },
-                        aspectRatio: 1.0 // Устанавливаем разрешение 1:1
-                    },
-                    onScanSuccess,
-                    onScanFailure
-                );
-            }).catch(error => {
-                console.error("Failed to start camera:", error);
+    // Запрашиваем доступ к видеопотоку с камеры
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            // Если доступ предоставлен, продолжаем настройку камеры
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    const backCamera = devices[0]; // Предполагаем, что первая камера - задняя
+                    html5QrcodeScanner.clear().then(() => {
+                        html5QrcodeScanner.start(
+                            backCamera.id,
+                            {
+                                fps: 10,
+                                qrbox: { width: 500, height: 500 },
+                                aspectRatio: 1.0 // Устанавливаем разрешение 1:1
+                            },
+                            onScanSuccess,
+                            onScanFailure
+                        );
+                    }).catch(error => {
+                        console.error("Failed to start camera:", error);
+                    });
+                }
+            }).catch(err => {
+                console.error("Error fetching camera devices:", err);
             });
-        }
-    }).catch(err => {
-        console.error("Error fetching camera devices:", err);
-    });
+        })
+        .catch(err => {
+            // Обрабатываем ошибку, если доступ к камере не предоставлен
+            console.error("Error accessing camera:", err);
+            alert("Не удалось получить доступ к камере. Пожалуйста, проверьте разрешения.");
+        });
 }
 
 // Инициализация сканера и настройка камеры
