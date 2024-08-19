@@ -152,8 +152,8 @@ function setupCamera() {
             // Если доступ предоставлен, продолжаем настройку камеры
             Html5Qrcode.getCameras().then(devices => {
                 if (devices && devices.length) {
-                    alert(devices);
                     const backCamera = devices[0]; // Предполагаем, что первая камера - задняя
+                    alert(backCamera.id);
                     html5QrcodeScanner.clear().then(() => {
                         html5QrcodeScanner.start(
                             backCamera.id,
