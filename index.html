@@ -85,33 +85,97 @@
     //     });
 
 
+
+
+
+
+
     // с возможностью загрузить картинку кода
+    // function onScanSuccess(decodedText, decodedResult) {
+    //     // handle the scanned code as you like, for example:
+    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
+    //     const result = document.querySelector('.result');
+    //     if (isReceipt(decodedText)) {
+    //         result.textContent = decodedText;
+    //     } else {
+    //         result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+    //     }
+
+    //     const resultInput = document.querySelector('#result');
+    //     resultInput.value = decodedText;
+    //     uploadText();
+    // }
+
+    // function onScanFailure(error) {
+    //     // handle scan failure, usually better to ignore and keep scanning.
+    //     // for example:
+    //     console.warn(`Code scan error = ${error}`);
+    // }
+
+    // let html5QrcodeScanner = new Html5QrcodeScanner(
+    //     "reader",
+    //     { fps: 10, qrbox: { width: 500, height: 500 } },
+    //   /* verbose= */ false);
+    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+
+
     function onScanSuccess(decodedText, decodedResult) {
-        // handle the scanned code as you like, for example:
-        // console.log(`Code matched = ${decodedText}`, decodedResult);
-        const result = document.querySelector('.result');
-        if (isReceipt(decodedText)) {
-            result.textContent = decodedText;
-        } else {
-            result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+    const result = document.querySelector('.result');
+    if (isReceipt(decodedText)) {
+        result.textContent = decodedText;
+    } else {
+        result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+    }
+
+    const resultInput = document.querySelector('#result');
+    resultInput.value = decodedText;
+    uploadText();
+}
+
+function onScanFailure(error) {
+    console.warn(`Code scan error = ${error}`);
+}
+
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: { width: 500, height: 500 } },
+    /* verbose= */ false);
+
+// Функция для выбора задней камеры и установки разрешения
+function setupCamera() {
+    Html5Qrcode.getCameras().then(devices => {
+        /**
+         * devices would be an array of objects of type:
+         * { id: "id", label: "label" }
+         */
+        if (devices && devices.length) {
+            // Предположим, что задняя камера обычно является второй в списке
+            const backCamera = devices[0]; // Это может быть не всегда верно, зависит от устройства
+            html5QrcodeScanner.clear().then(() => {
+                html5QrcodeScanner.start(
+                    backCamera.id,
+                    {
+                        fps: 10,
+                        qrbox: { width: 500, height: 500 },
+                        aspectRatio: 1.0 // Устанавливаем разрешение 1:1
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+            }).catch(error => {
+                console.error("Failed to start camera:", error);
+            });
         }
+    }).catch(err => {
+        console.error("Error fetching camera devices:", err);
+    });
+}
 
-        const resultInput = document.querySelector('#result');
-        resultInput.value = decodedText;
-        uploadText();
-    }
+// Инициализация сканера и настройка камеры
+setupCamera();
 
-    function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // for example:
-        console.warn(`Code scan error = ${error}`);
-    }
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 500, height: 500 } },
-      /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
 
