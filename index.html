@@ -9,114 +9,96 @@
 </head>
 
 <body>
-    <!--для отображения изображения с камеры-->
-    <!-- <video id="video" autoplay></video>
-    <canvas id="qrcode"></canvas> -->
     <div id="reader" style="width: 600px; height: 600px;"></div>
     <div class="result"></div>
     <input type="text" id="result" style="display: none">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </body>
 <script>
-    // const video = document.getElementById('video');
-    // const canvas = document.getElementById('qrcode');
-    // const context = canvas.getContext('2d');
-    // const jpegDataURL = canvas.toDataURL('image/jpeg'); // преобразовать в jpeg
-
-    // const img = new Image();
-    // img.onload = drawImageActualSize;
-    // img.src = 'img3.jpg';
-
-    // function drawImageActualSize() {
-    //     canvas.width = this.naturalWidth;
-    //     canvas.height = this.naturalHeight;
-    //     context.drawImage(this, 0, 0);
-    //     // context.drawImage(this, 0, 0, this.width, this.height);
-    // }
-
-
-    // const constrains = {
-    //     video: {
-    //         facingMode: { exact: "environment" },
-    //         // width: { min: 1280 },
-    //         // height: { min: 720 },
-    //     }
-    // }
-    // navigator.mediaDevices.getUserMedia(constrains)
-    //     .then(stream => {
-    //         video.srcObject = stream;
-    //         video.play();
-
-    //         // Draw the video frame onto the canvas every 2000ms
-    //         setInterval(() => {
-    //             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    //         }, 2000);
-    //     })
-    //     .catch(error => {
-    //         console.log('Error accessing camera:', error);
-    //     });
-
-
-    // navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-    //     .then(function (stream) {
-    //         // Create a video element and attach the stream to it
-    //         var video = document.createElement('video');
-    //         video.setAttribute('id', 'video');
-    //         video.srcObject = stream;
-    //         video.play();
-
-    //         // After the video starts playing, take a snapshot
-    //         video.onplayed = function (ev) {
-    //             setTimeout(function () {
-    //                 // Take a snapshot and convert it to a Blob
-    //                 var canvas = document.createElement('canvas');
-    //                 canvas.setAttribute('id', 'qrcode');
-    //                 canvas.width = video.videoWidth;
-    //                 canvas.height = video.videoHeight;
-    //                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    //                 var imageBlob = new Blob([canvas.toDataURL('image/jpeg').split(',')[1]], { type: 'image/jpeg' });
-
-    //                 // Send the image to the server
-    //                 var xhr = new XMLHttpRequest();
-    //                 xhr.open('POST', 'http://your-server.com/upload', true);
-    //                 xhr.send(imageBlob);
-    //             }, 1000);
-    //         };
-    //     });
-
-
-
-
-
-
-
     // с возможностью загрузить картинку кода
-    function onScanSuccess(decodedText, decodedResult) {
-        // handle the scanned code as you like, for example:
-        // console.log(`Code matched = ${decodedText}`, decodedResult);
-        const result = document.querySelector('.result');
-        if (isReceipt(decodedText)) {
-            result.textContent = decodedText;
-        } else {
-            result.textContent = `Этот qr-код не от чека: ${decodedText}`;
-        }
+    // function onScanSuccess(decodedText, decodedResult) {
+    //     // handle the scanned code as you like, for example:
+    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
+    //     const result = document.querySelector('.result');
+    //     if (isReceipt(decodedText)) {
+    //         result.textContent = decodedText;
+    //     } else {
+    //         result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+    //     }
 
-        const resultInput = document.querySelector('#result');
+    //     const resultInput = document.querySelector('#result');
+    //     resultInput.value = decodedText;
+    //     uploadText();
+    // }
+
+    // function onScanFailure(error) {
+    //     // handle scan failure, usually better to ignore and keep scanning.
+    //     // for example:
+    //     console.warn(`Code scan error = ${error}`);
+    // }
+
+    // let html5QrcodeScanner = new Html5QrcodeScanner(
+    //     "reader",
+    //     { fps: 10, qrbox: { width: 500, height: 500 } },
+    //   /* verbose= */ false);
+    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+
+
+    //ПРОВЕРКА ДЛЯ ЧЕСТНОГО ЗНАКА
+    function onScanSuccess(decodedText, decodedResult) {
+    const result = document.querySelector('.result');
+    const resultInput = document.querySelector('#result');
+    
+    // Проверяем, является ли код QR-кодом чека или кодом "Честного знака"
+    if (isReceipt(decodedText) || isHonestSign(decodedText)) {
+        result.textContent = decodedText;
         resultInput.value = decodedText;
         uploadText();
+    } else {
+        result.textContent = `Этот код не от чека или Честного знака: ${decodedText}`;
+        resultInput.value = '';
     }
+}
 
-    function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // for example:
-        console.warn(`Code scan error = ${error}`);
+function onScanFailure(error) {
+    console.warn(`Code scan error = ${error}`);
+}
+
+// Функция для проверки кода "Честного знака"
+function isHonestSign(code) {
+    // Проверяем форматы кодов "Честного знака":
+    // 1. Коды формата DataMatrix (01...21...)
+    // 2. Коды формата QR (содержащие "t=" для crypto signs)
+    
+    // Проверка на DataMatrix (GTIN + Serial)
+    if (/^01\d{14}21.+$/.test(code)) {
+        return true;
     }
+    
+    // Проверка на QR код Честного знака (содержит crypto signs)
+    if (code.includes('t=') && code.includes('s=') && code.includes('sn=')) {
+        return true;
+    }
+    
+    return false;
+}
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 500, height: 500 } },
-      /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+        fps: 10, 
+        qrbox: { width: 500, height: 500 },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.DATA_MATRIX // для сканирования DataMatrix кодов
+        ]
+    },
+    /* verbose= */ false
+);
+
+html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
 
