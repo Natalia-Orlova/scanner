@@ -91,97 +91,97 @@
 
 
     // с возможностью загрузить картинку кода
-    // function onScanSuccess(decodedText, decodedResult) {
-    //     // handle the scanned code as you like, for example:
-    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
-    //     const result = document.querySelector('.result');
-    //     if (isReceipt(decodedText)) {
-    //         result.textContent = decodedText;
-    //     } else {
-    //         result.textContent = `Этот qr-код не от чека: ${decodedText}`;
-    //     }
+    function onScanSuccess(decodedText, decodedResult) {
+        // handle the scanned code as you like, for example:
+        // console.log(`Code matched = ${decodedText}`, decodedResult);
+        const result = document.querySelector('.result');
+        if (isReceipt(decodedText)) {
+            result.textContent = decodedText;
+        } else {
+            result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+        }
 
-    //     const resultInput = document.querySelector('#result');
-    //     resultInput.value = decodedText;
-    //     uploadText();
-    // }
+        const resultInput = document.querySelector('#result');
+        resultInput.value = decodedText;
+        uploadText();
+    }
 
-    // function onScanFailure(error) {
-    //     // handle scan failure, usually better to ignore and keep scanning.
-    //     // for example:
-    //     console.warn(`Code scan error = ${error}`);
-    // }
+    function onScanFailure(error) {
+        // handle scan failure, usually better to ignore and keep scanning.
+        // for example:
+        console.warn(`Code scan error = ${error}`);
+    }
 
-    // let html5QrcodeScanner = new Html5QrcodeScanner(
-    //     "reader",
-    //     { fps: 10, qrbox: { width: 500, height: 500 } },
-    //   /* verbose= */ false);
-    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 500, height: 500 } },
+      /* verbose= */ false);
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
 
     
 
-    function onScanSuccess(decodedText, decodedResult) {
-    const result = document.querySelector('.result');
-    if (isReceipt(decodedText)) {
-        result.textContent = decodedText;
-    } else {
-        result.textContent = `Этот qr-код не от чека: ${decodedText}`;
-    }
+//     function onScanSuccess(decodedText, decodedResult) {
+//     const result = document.querySelector('.result');
+//     if (isReceipt(decodedText)) {
+//         result.textContent = decodedText;
+//     } else {
+//         result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+//     }
 
-    const resultInput = document.querySelector('#result');
-    resultInput.value = decodedText;
-    uploadText();
-}
+//     const resultInput = document.querySelector('#result');
+//     resultInput.value = decodedText;
+//     uploadText();
+// }
 
-function onScanFailure(error) {
-    console.warn(`Code scan error = ${error}`);
-}
+// function onScanFailure(error) {
+//     console.warn(`Code scan error = ${error}`);
+// }
 
-let html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: { width: 500, height: 500 } },
-    /* verbose= */ false);
+// let html5QrcodeScanner = new Html5QrcodeScanner(
+//     "reader",
+//     { fps: 10, qrbox: { width: 500, height: 500 } },
+//     /* verbose= */ false);
 
-// Функция для выбора задней камеры и установки разрешения
-function setupCamera() {
-    // Запрашиваем доступ к видеопотоку с камеры
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            // Если доступ предоставлен, продолжаем настройку камеры
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    const backCamera = devices[0]; // Предполагаем, что первая камера - задняя
-                    alert(backCamera.id);
-                    html5QrcodeScanner.clear().then(() => {
-                        html5QrcodeScanner.start(
-                            backCamera.id,
-                            {
-                                fps: 10,
-                                qrbox: { width: 500, height: 500 },
-                                // aspectRatio: 1.0 
-                            },
-                            onScanSuccess,
-                            onScanFailure
-                        );
-                    }).catch(error => {
-                        console.error("Failed to start camera:", error);
-                    });
-                }
-            }).catch(err => {
-                console.error("Error fetching camera devices:", err);
-            });
-        })
-        .catch(err => {
-            // Обрабатываем ошибку, если доступ к камере не предоставлен
-            console.error("Error accessing camera:", err);
-            alert("Не удалось получить доступ к камере. Пожалуйста, проверьте разрешения.");
-        });
-}
+// // Функция для выбора задней камеры и установки разрешения
+// function setupCamera() {
+//     // Запрашиваем доступ к видеопотоку с камеры
+//     navigator.mediaDevices.getUserMedia({ video: true })
+//         .then(stream => {
+//             // Если доступ предоставлен, продолжаем настройку камеры
+//             Html5Qrcode.getCameras().then(devices => {
+//                 if (devices && devices.length) {
+//                     const backCamera = devices[0]; // Предполагаем, что первая камера - задняя
+//                     alert(backCamera.id);
+//                     html5QrcodeScanner.clear().then(() => {
+//                         html5QrcodeScanner.start(
+//                             backCamera.id,
+//                             {
+//                                 fps: 10,
+//                                 qrbox: { width: 500, height: 500 },
+//                                 // aspectRatio: 1.0 
+//                             },
+//                             onScanSuccess,
+//                             onScanFailure
+//                         );
+//                     }).catch(error => {
+//                         console.error("Failed to start camera:", error);
+//                     });
+//                 }
+//             }).catch(err => {
+//                 console.error("Error fetching camera devices:", err);
+//             });
+//         })
+//         .catch(err => {
+//             // Обрабатываем ошибку, если доступ к камере не предоставлен
+//             console.error("Error accessing camera:", err);
+//             alert("Не удалось получить доступ к камере. Пожалуйста, проверьте разрешения.");
+//         });
+// }
 
-// Инициализация сканера и настройка камеры
-setupCamera();
+// // Инициализация сканера и настройка камеры
+// setupCamera();
 
 
 
