@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -45,60 +45,7 @@
 
 
 
-    //ПРОВЕРКА ДЛЯ ЧЕСТНОГО ЗНАКА
-    function onScanSuccess(decodedText, decodedResult) {
-    const result = document.querySelector('.result');
-    const resultInput = document.querySelector('#result');
     
-    // Проверяем, является ли код QR-кодом чека или кодом "Честного знака"
-    if (isReceipt(decodedText) || isHonestSign(decodedText)) {
-        result.textContent = decodedText;
-        resultInput.value = decodedText;
-        uploadText();
-    } else {
-        result.textContent = `Этот код не от чека или Честного знака: ${decodedText}`;
-        resultInput.value = '';
-    }
-}
-
-function onScanFailure(error) {
-    console.warn(`Code scan error = ${error}`);
-}
-
-// Функция для проверки кода "Честного знака"
-function isHonestSign(code) {
-    // Проверяем форматы кодов "Честного знака":
-    // 1. Коды формата DataMatrix (01...21...)
-    // 2. Коды формата QR (содержащие "t=" для crypto signs)
-    
-    // Проверка на DataMatrix (GTIN + Serial)
-    if (/^01\d{14}21.+$/.test(code)) {
-        return true;
-    }
-    
-    // Проверка на QR код Честного знака (содержит crypto signs)
-    if (code.includes('t=') && code.includes('s=') && code.includes('sn=')) {
-        return true;
-    }
-    
-    return false;
-}
-
-let html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    { 
-        fps: 10, 
-        qrbox: { width: 500, height: 500 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.DATA_MATRIX // для сканирования DataMatrix кодов
-        ]
-    },
-    /* verbose= */ false
-);
-
-html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
 
@@ -236,4 +183,185 @@ html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     }
 </script>
 
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Сканер QR и DataMatrix</title>
+    <style>
+        #reader {
+            width: 600px;
+            margin: 0 auto;
+        }
+        .scan-result {
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 600px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .result-type {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 3px;
+            color: white;
+        }
+        .receipt {
+            background-color: #4CAF50;
+        }
+        .honest-sign {
+            background-color: #2196F3;
+        }
+        .unknown {
+            background-color: #f44336;
+        }
+        .result-data {
+            word-wrap: break-word;
+            font-family: monospace;
+        }
+        #startButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="reader"></div>
+    <button id="startButton">Начать сканирование</button>
+    
+    <div id="resultContainer" class="scan-result" style="display: none;">
+        <div id="resultType" class="result-type"></div>
+        <div>Тип кода: <span id="codeFormat"></span></div>
+        <div>Содержимое:</div>
+        <div id="resultData" class="result-data"></div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
+    <script>
+        let html5QrcodeScanner;
+        const startButton = document.getElementById('startButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultType = document.getElementById('resultType');
+        const codeFormat = document.getElementById('codeFormat');
+        const resultData = document.getElementById('resultData');
+
+        startButton.addEventListener('click', startScanner);
+
+        function startScanner() {
+            // Остановить предыдущий сканер, если он был
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(error => {
+                    console.error("Failed to clear html5QrcodeScanner. ", error);
+                });
+            }
+
+            // Скрыть кнопку и показать сканер
+            startButton.style.display = 'none';
+            resultContainer.style.display = 'none';
+
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { 
+                    fps: 10, 
+                    qrbox: { width: 500, height: 500 },
+                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.DATA_MATRIX
+                    ]
+                },
+                false
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Остановить сканер после успешного сканирования
+            html5QrcodeScanner.clear().catch(error => {
+                console.error("Failed to clear html5QrcodeScanner. ", error);
+            });
+
+            // Показать кнопку и результаты
+            startButton.style.display = 'block';
+            resultContainer.style.display = 'block';
+
+            // Определить тип кода
+            let type, typeClass;
+            if (isReceipt(decodedText)) {
+                type = "QR-код чека";
+                typeClass = "receipt";
+            } else if (isHonestSign(decodedText)) {
+                type = "Честный знак";
+                typeClass = "honest-sign";
+            } else {
+                type = "Неизвестный код";
+                typeClass = "unknown";
+            }
+
+            // Вывести результаты на страницу
+            resultType.textContent = type;
+            resultType.className = `result-type ${typeClass}`;
+            codeFormat.textContent = decodedResult.result.format.formatName;
+            resultData.textContent = decodedText;
+
+            // Можно добавить дополнительную обработку данных
+            if (type === "Честный знак") {
+                parseHonestSign(decodedText);
+            }
+        }
+
+        function onScanFailure(error) {
+            console.warn(`Ошибка сканирования: ${error}`);
+        }
+
+        function isReceipt(code) {
+            // Ваша существующая проверка для чеков
+            return code.startsWith('t=') || code.includes('&fn=') || code.includes('&i=') || code.includes('&fp=');
+        }
+
+        function isHonestSign(code) {
+            // Проверяем форматы кодов "Честного знака":
+            // 1. DataMatrix (01...21...)
+            if (/^01\d{14}21.+$/.test(code)) {
+                return true;
+            }
+            
+            // 2. QR с криптохвостами (t=, s=, sn=)
+            if (code.includes('t=') && code.includes('s=') && code.includes('sn=')) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function parseHonestSign(code) {
+            // Дополнительный парсинг для "Честного знака"
+            if (/^01\d{14}21.+$/.test(code)) {
+                // DataMatrix формат: 01<GTIN>21<serial>
+                const gtin = code.substring(2, 16);
+                const serial = code.substring(18);
+                console.log("GTIN:", gtin);
+                console.log("Serial:", serial);
+            } else if (code.includes('t=')) {
+                // QR с криптохвостами
+                const params = new URLSearchParams(code.split('?')[1]);
+                console.log("Криптохвост:", params.get('t'));
+                console.log("Серийный номер:", params.get('sn'));
+            }
+        }
+    </script>
+</body>
 </html>
