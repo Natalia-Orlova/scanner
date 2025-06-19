@@ -16,32 +16,82 @@
 </body>
 <script>
     // с возможностью загрузить картинку кода
+    // function onScanSuccess(decodedText, decodedResult) {
+    //     // handle the scanned code as you like, for example:
+    //     // console.log(`Code matched = ${decodedText}`, decodedResult);
+    //     const result = document.querySelector('.result');
+    //     if (isReceipt(decodedText)) {
+    //         result.textContent = decodedText;
+    //     } else {
+    //         result.textContent = `Этот qr-код не от чека: ${decodedText}`;
+    //     }
+
+    //     const resultInput = document.querySelector('#result');
+    //     resultInput.value = decodedText;
+    //     uploadText();
+    // }
+
+    // function onScanFailure(error) {
+    //     // handle scan failure, usually better to ignore and keep scanning.
+    //     // for example:
+    //     console.warn(`Code scan error = ${error}`);
+    // }
+
+    // let html5QrcodeScanner = new Html5QrcodeScanner(
+    //     "reader",
+    //     { fps: 10, qrbox: { width: 500, height: 500 } },
+    //   /* verbose= */ false);
+    // html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+
+    //честный знак
     function onScanSuccess(decodedText, decodedResult) {
-        // handle the scanned code as you like, for example:
-        // console.log(`Code matched = ${decodedText}`, decodedResult);
-        const result = document.querySelector('.result');
-        if (isReceipt(decodedText)) {
-            result.textContent = decodedText;
-        } else {
-            result.textContent = `Этот qr-код не от чека: ${decodedText}`;
-        }
-
-        const resultInput = document.querySelector('#result');
-        resultInput.value = decodedText;
-        uploadText();
+    const result = document.querySelector('.result');
+    const resultInput = document.querySelector('#result');
+    
+    if (isReceipt(decodedText)) {
+        result.textContent = `QR-код чека: ${decodedText}`;
+    } else if (isHonestSign(decodedText)) {
+        result.textContent = `Код Честного знака: ${decodedText}`;
+    } else {
+        result.textContent = `Этот код не от чека и не Честный знак: ${decodedText}`;
     }
 
-    function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // for example:
-        console.warn(`Code scan error = ${error}`);
-    }
+    resultInput.value = decodedText;
+    uploadText();
+}
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 500, height: 500 } },
-      /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+function onScanFailure(error) {
+    console.warn(`Ошибка сканирования: ${error}`);
+}
+
+// Функция проверки кода "Честного знака"
+function isHonestSign(code) {
+    // Проверка DataMatrix (01<GTIN>21<serial>)
+    if (/^01\d{14}21.+$/.test(code)) return true;
+    
+    // Проверка QR с криптохвостами (Честный знак)
+    if (code.includes('t=') && code.includes('s=') && code.includes('sn=')) return true;
+    
+    return false;
+}
+
+// Инициализация сканера с поддержкой загрузки изображений (встроенная в библиотеку)
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+        fps: 10, 
+        qrbox: { width: 500, height: 500 },
+        // Включение поддержки DataMatrix для Честного знака
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.DATA_MATRIX
+        ]
+    },
+    /* verbose= */ false
+);
+
+html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
 
 
