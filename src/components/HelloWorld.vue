@@ -372,6 +372,19 @@ const submitManualCode = () => {
   align-items: center;
   position: relative;
 }
+.scanner-area::before {
+  content: "";
+  display: block;
+  padding-top: 100%;
+  position: relative;
+}
+#qr-scanner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
 
 .scanner-area video {
   width: 100%;
