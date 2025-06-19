@@ -1,0 +1,45 @@
+@font-face {
+  font-family: Roobert;
+  src: url(/src/assets/fonts/Roobert/RoobertTRIAL-Regular.ttf);
+}
+@font-face {
+  font-family: RoobertSemiBold;
+  src: url(/src/assets/fonts/Roobert/RoobertTRIAL-SemiBold.ttf);
+}
+@font-face {
+  font-family: RoobertBold;
+  src: url(/src/assets/fonts/Roobert/RoobertTRIAL-Bold.ttf);
+}
+@font-face {
+  font-family: RoobertHeavy;
+  src: url(/src/assets/fonts/Roobert/RoobertTRIAL-Heavy.ttf);
+}
+
+:root {
+  --primary: #1e1e1e;
+  --second-color: #fff;
+  --success: #00c48c;
+  --danger: #fc6d6d;
+  --border-light: #E2E2E2;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Roobert, sans-serif;
+  font-size: 16px;
+  background: #fdfdfd;
+  color: var(--primary);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+a {
+  // color: #003edc;
+  color: var(--primary);
+  text-decoration: none;
+}
