@@ -16,7 +16,7 @@
       <div id="qr-scanner" class="scanner-area"></div>
       <div class="camera-controls">
         <div
-          v-if="cameras.length > 1"
+          v-if="cameras.length >= 1"
           class="control-button"
           @click="showCameraSelection = true"
         >
