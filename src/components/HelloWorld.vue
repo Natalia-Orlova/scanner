@@ -159,7 +159,7 @@ const handleResize = async () => {
     const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
     const qrboxSize = Math.min(viewportWidth, props.qrbox);
     html5Qrcode.value.updateScannerConfig({
-      qrbox: { width: qrboxSize, height: qrboxSize },
+      qrbox: { width: 200, height: 200 },
     });
   }
 };
