@@ -159,7 +159,7 @@ const handleResize = async () => {
     const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
     const qrboxSize = Math.min(viewportWidth, props.qrbox);
     html5Qrcode.value.updateScannerConfig({
-      qrbox: { width: 200, height: 200 },
+      qrbox: { width: 250, height: 250 },
     });
   }
 };
@@ -255,7 +255,7 @@ const startCameraScan = async () => {
     const qrboxSize = Math.min(viewportWidth, props.qrbox);
     const config = {
       fps: props.fps,
-      qrbox: { width: qrboxSize, height: qrboxSize },
+      qrbox: { width: 250, height: 250 },
       disableFlip: true,
       videoConstraints: {
         facingMode: "environment",
