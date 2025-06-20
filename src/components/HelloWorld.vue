@@ -183,7 +183,7 @@ const startCameraScan = async () => {
 
     if (!cameraId && cameras.length > 0) {
       // Пытаемся выбрать камеру с ID "0"
-      const primaryBackCamera = cameras.find((c) => c.id === "camera2 2");
+      const primaryBackCamera = cameras.find((c) => c.id === "camera2 0");
 
       if (primaryBackCamera) {
         cameraId = primaryBackCamera.id;
@@ -387,24 +387,27 @@ const submitManualCode = () => {
   align-items: center;
   position: relative;
 }
+
 .scanner-area::before {
   content: "";
   display: block;
-  padding-top: 100%;
+  padding-top: 100%; /* Сохраняет соотношение сторон 1:1 */
   position: relative;
 }
+
 #qr-scanner {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  overflow: hidden; /* Предотвращает растягивание */
 }
 
 .scanner-area video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Сохраняет пропорции видео */
 }
 
 .camera-controls {
