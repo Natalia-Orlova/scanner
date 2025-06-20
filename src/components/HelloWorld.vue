@@ -118,7 +118,7 @@ onMounted(() => {
 });
 
 onUnmounted(async () => {
-   window.removeEventListener("resize", handleResize);
+  window.removeEventListener("resize", handleResize);
 
   await stopScanner();
   if (cameraPermissionTimeout) clearTimeout(cameraPermissionTimeout);
@@ -196,21 +196,37 @@ const startCameraScan = async () => {
     let cameraId = selectedCameraId.value;
 
     if (!cameraId && cameras.length > 0) {
-      // Пытаемся выбрать камеру с ID "0"
-      const primaryBackCamera = cameras.find((c) => c.id === "camera2 0");
+      let selectedCamera = null;
 
-      if (primaryBackCamera) {
-        cameraId = primaryBackCamera.id;
-      } else {
-        // Если камеры с ID "0" нет, выбираем первую камеру с меткой "back"
-        const backCamera = cameras.find((c) => c.label.includes("back"));
+      for (const camera of cameras) {
+        if (camera.label.includes("back")) {
+          try {
+            const capabilities = await Html5Qrcode.getCapabilities(camera.id);
 
-        if (backCamera) {
-          cameraId = backCamera.id;
-        } else {
-          // Если ничего не нашли, берем первую доступную
-          cameraId = cameras[0].id;
+            // Проверяем, поддерживает ли камера нужное разрешение
+            if (
+              capabilities.videoCapabilities.some(
+                (cap) =>
+                  cap.width === 1920 && cap.height === 1080 && cap.zoom === 1.0
+              )
+            ) {
+              selectedCamera = camera;
+              break;
+            }
+          } catch (error) {
+            console.warn(
+              `Ошибка получения возможностей камеры ${camera.id}:`,
+              error
+            );
+          }
         }
+      }
+
+      if (selectedCamera) {
+        cameraId = selectedCamera.id;
+      } else {
+        // Если ничего не нашли, берем первую доступную
+        cameraId = cameras[0].id;
       }
 
       selectedCameraId.value = cameraId;
