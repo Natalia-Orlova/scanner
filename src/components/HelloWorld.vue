@@ -147,21 +147,17 @@ const getCameras = async () => {
 
 const startCameraScan = async () => {
   if (isScanning.value || cameraActive.value) return;
-
   try {
     isScanning.value = true;
     cameraActive.value = true;
     scanResult.value = "";
     torchActive.value = false;
     await nextTick();
-
     if (!html5Qrcode.value) {
       html5Qrcode.value = new Html5Qrcode("qr-scanner");
     }
-
     const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
     const qrboxSize = Math.min(viewportWidth, props.qrbox);
-
     const config = {
       fps: props.fps,
       qrbox: { width: qrboxSize, height: qrboxSize },
@@ -182,17 +178,25 @@ const startCameraScan = async () => {
       ],
       ignoreIfStillFor: 2,
     };
-
     const cameras = await getCameras();
     let cameraId = selectedCameraId.value;
 
     if (!cameraId && cameras.length > 0) {
-      const backCamera = cameras.find((c) => c.label.includes("back"));
+      // Пытаемся выбрать камеру с ID "0"
+      const primaryBackCamera = cameras.find((c) => c.id === "camera2 0");
 
-      if (backCamera) {
-        cameraId = backCamera.id;
+      if (primaryBackCamera) {
+        cameraId = primaryBackCamera.id;
       } else {
-        cameraId = cameras[0].id;
+        // Если камеры с ID "0" нет, выбираем первую камеру с меткой "back"
+        const backCamera = cameras.find((c) => c.label.includes("back"));
+
+        if (backCamera) {
+          cameraId = backCamera.id;
+        } else {
+          // Если ничего не нашли, берем первую доступную
+          cameraId = cameras[0].id;
+        }
       }
 
       selectedCameraId.value = cameraId;
