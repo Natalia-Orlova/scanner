@@ -103,10 +103,22 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import { BrowserQRCodeReader } from "@zxing/library";
+import {
+  BrowserMultiFormatReader,
+  DecodeHintType
+} from '@zxing/library';
 
-// Импортируем библиотеку
-const codeReader = new BrowserQRCodeReader();
+const formats = [
+  // Добавьте нужные форматы
+  DecodeHintType.QR_CODE,
+  DecodeHintType.EAN_13,
+  DecodeHintType.CODE_128,
+  DecodeHintType.DATA_MATRIX,
+  DecodeHintType.AZTEC,
+];
+
+// Создаем читателя
+const codeReader = new BrowserMultiFormatReader(formats);
 
 // --- Состояния ---
 const CAMERA_PERMISSION_TIMEOUT = 5 * 60 * 1000;
