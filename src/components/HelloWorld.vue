@@ -490,6 +490,7 @@ const submitManualCode = () => {
   margin-bottom: 16px;
   color: v-bind('modalTextColor || "inherit"');
   font-size: 20px;
+  word-break: break-all;
 }
 .modal-content input {
   width: 100%;
