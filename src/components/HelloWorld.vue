@@ -1,4 +1,3 @@
-<!--последняя рабочая версия, но с двойным запросом доступа к камере  -->
 <template>
   <div class="qr-scanner-container">
     <div class="scanner-controls">
@@ -17,6 +16,13 @@
       <div id="qr-scanner" class="scanner-area"></div>
       <div class="camera-controls">
         <div
+          v-if="cameras.length > 1"
+          class="control-button"
+          @click="showCameraSelection = true"
+        >
+          Сменить камеру
+        </div>
+        <div
           v-if="torchSupported"
           class="control-button"
           @click="toggleTorch"
@@ -26,6 +32,29 @@
         </div>
         <div class="control-button close-button" @click="stopScanner">
           Закрыть
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showCameraSelection" class="modal-overlay">
+      <div class="modal-content camera-selection">
+        <h3>Выберите камеру</h3>
+        <div class="camera-list">
+          <div
+            v-for="camera in cameras"
+            :key="camera.id"
+            class="camera-item"
+            @click="selectCamera(camera.id)"
+            :class="{ active: selectedCameraId === camera.id }"
+          >
+            <div class="camera-name">{{ getCameraName(camera) }}</div>
+            <div class="camera-details">
+              {{ getCameraDetails(camera) }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <Button label="Отмена" @click="showCameraSelection = false" />
         </div>
       </div>
     </div>
@@ -92,10 +121,8 @@ const selectedCameraId = ref(null);
 const lastCameraAccess = ref(null);
 const fileError = ref("");
 const fileInput = ref(null);
-
-const showModal = ref(false);
-const modalMessage = ref("");
-const modalTextColor = ref("");
+const cameras = ref([]);
+const showCameraSelection = ref(false);
 
 const props = {
   qrbox: 250,
@@ -152,11 +179,59 @@ const saveCameraAccess = (cameraId) => {
 
 const getCameras = async () => {
   try {
-    return await Html5Qrcode.getCameras();
+    const availableCameras = await Html5Qrcode.getCameras();
+    cameras.value = availableCameras;
+    return availableCameras;
   } catch (error) {
     console.error("Ошибка получения камер:", error);
     return [];
   }
+};
+
+const getCameraName = (camera) => {
+  if (!camera.label) return "Камера";
+  
+  // Удаляем лишнюю информацию в скобках
+  let name = camera.label.replace(/\([^)]*\)/g, '').trim();
+  
+  // Упрощаем стандартные названия
+  if (name.includes('back') || name.toLowerCase().includes('rear')) {
+    return "Основная камера";
+  } else if (name.includes('front')) {
+    return "Фронтальная камера";
+  }
+  
+  return name || "Камера";
+};
+
+const getCameraDetails = (camera) => {
+  if (!camera.label) return "";
+  
+  // Извлекаем разрешение из названия камеры
+  const resolutionMatch = camera.label.match(/\d+x\d+/);
+  const resolution = resolutionMatch ? resolutionMatch[0] : "";
+  
+  // Определяем тип камеры (1x, 0.5x и т.д.)
+  let cameraType = "";
+  if (camera.label.includes('0.5x') || camera.label.includes('ultrawide')) {
+    cameraType = "0.5x (широкоугольная)";
+  } else if (camera.label.includes('1x')) {
+    cameraType = "1x (стандартная)";
+  } else if (camera.label.includes('2x') || camera.label.includes('telephoto')) {
+    cameraType = "2x (телефото)";
+  }
+  
+  return [resolution, cameraType].filter(Boolean).join(" · ");
+};
+
+const selectCamera = async (cameraId) => {
+  selectedCameraId.value = cameraId;
+  saveCameraAccess(cameraId);
+  showCameraSelection.value = false;
+  
+  // Перезапускаем сканер с новой камерой
+  await stopScanner();
+  await startCameraScan();
 };
 
 const startCameraScan = async () => {
@@ -166,10 +241,13 @@ const startCameraScan = async () => {
     cameraActive.value = true;
     scanResult.value = "";
     torchActive.value = false;
+    
     await nextTick();
+    
     if (!html5Qrcode.value) {
       html5Qrcode.value = new Html5Qrcode("qr-scanner");
     }
+    
     const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
     const qrboxSize = Math.min(viewportWidth, props.qrbox);
     const config = {
@@ -179,10 +257,6 @@ const startCameraScan = async () => {
       videoConstraints: {
         facingMode: "environment",
         zoom: 1.0,
-        advanced: [
-          { zoom: 1.0 },
-          { width: { exact: 1920 }, height: { exact: 1080 } },
-        ],
       },
       formatsToSupport: [
         Html5Qrcode.QR_CODE,
@@ -192,24 +266,37 @@ const startCameraScan = async () => {
       ],
       ignoreIfStillFor: 2,
     };
-    const cameras = await getCameras();
+    
+    // Получаем список доступных камер
+    const availableCameras = await getCameras();
     let cameraId = selectedCameraId.value;
 
-    if (!cameraId && cameras.length > 0) {
-      let selectedIdx = 0;
-
-      if (cameras.length > 1) {
-        // Попробуем выбрать вторую камеру (часто это основная тыльная)
-        selectedIdx = 1;
-
-        // Если вторая камера тоже фронтальная, попробуем третью
-        const secondCameraLabel = cameras[1]?.label || "";
-        if (secondCameraLabel.toLowerCase().includes("front")) {
-          selectedIdx = 2;
-        }
+    // Если камера не выбрана, пытаемся выбрать оптимальную
+    if (!cameraId && availableCameras.length > 0) {
+      // Сначала ищем тыльную камеру с максимальным разрешением
+      const rearCameras = availableCameras.filter(cam => 
+        cam.label.toLowerCase().includes('back') || 
+        cam.label.toLowerCase().includes('rear')
+      );
+      
+      if (rearCameras.length > 0) {
+        // Сортируем по разрешению (предполагая, что оно указано в названии)
+        rearCameras.sort((a, b) => {
+          const getResolution = (label) => {
+            const match = label.match(/\d+x\d+/);
+            if (!match) return 0;
+            const [w, h] = match[0].split('x').map(Number);
+            return w * h;
+          };
+          return getResolution(b.label) - getResolution(a.label);
+        });
+        
+        cameraId = rearCameras[0].id;
+      } else {
+        // Если тыльных камер нет, берем первую
+        cameraId = availableCameras[0].id;
       }
-
-      cameraId = cameras[selectedIdx]?.id || cameras[0].id;
+      
       selectedCameraId.value = cameraId;
       saveCameraAccess(cameraId);
     }
@@ -465,6 +552,41 @@ const submitManualCode = () => {
   width: 85%;
   max-width: 400px;
   text-align: center;
+}
+
+.modal-content.camera-selection {
+  max-width: 90%;
+  width: 90%;
+}
+
+.camera-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: 15px 0;
+}
+
+.camera-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.camera-item:hover {
+  background-color: #f5f5f5;
+}
+
+.camera-item.active {
+  background-color: #e0f7fa;
+}
+
+.camera-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.camera-details {
+  font-size: 0.9em;
+  color: #666;
 }
 
 .modal-text {
