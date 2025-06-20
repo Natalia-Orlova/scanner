@@ -127,10 +127,6 @@ const fileInput = ref(null);
 const cameras = ref([]);
 const showCameraSelection = ref(false);
 
-const props = {
-  qrbox: 250,
-  fps: 10,
-};
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
@@ -156,8 +152,6 @@ onUnmounted(async () => {
 
 const handleResize = async () => {
   if (html5Qrcode.value?.isScanning) {
-    const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
-    const qrboxSize = Math.min(viewportWidth, props.qrbox);
     html5Qrcode.value.updateScannerConfig({
       qrbox: { width: 250, height: 250 },
     });
@@ -251,10 +245,9 @@ const startCameraScan = async () => {
       html5Qrcode.value = new Html5Qrcode("qr-scanner");
     }
     
-    const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
-    const qrboxSize = Math.min(viewportWidth, props.qrbox);
+
     const config = {
-      fps: props.fps,
+      fps: 10,
       qrbox: { width: 250, height: 250 },
       disableFlip: true,
       videoConstraints: {
