@@ -196,39 +196,20 @@ const startCameraScan = async () => {
     let cameraId = selectedCameraId.value;
 
     if (!cameraId && cameras.length > 0) {
-      let selectedCamera = null;
+      let selectedIdx = 0;
 
-      for (const camera of cameras) {
-        if (camera.label.includes("back")) {
-          try {
-            const capabilities = await Html5Qrcode.getCapabilities(camera.id);
+      if (cameras.length > 1) {
+        // Попробуем выбрать вторую камеру (часто это основная тыльная)
+        selectedIdx = 1;
 
-            // Проверяем, поддерживает ли камера нужное разрешение
-            if (
-              capabilities.videoCapabilities.some(
-                (cap) =>
-                  cap.width === 1920 && cap.height === 1080 && cap.zoom === 1.0
-              )
-            ) {
-              selectedCamera = camera;
-              break;
-            }
-          } catch (error) {
-            console.warn(
-              `Ошибка получения возможностей камеры ${camera.id}:`,
-              error
-            );
-          }
+        // Если вторая камера тоже фронтальная, попробуем третью
+        const secondCameraLabel = cameras[1]?.label || "";
+        if (secondCameraLabel.toLowerCase().includes("front")) {
+          selectedIdx = 2;
         }
       }
 
-      if (selectedCamera) {
-        cameraId = selectedCamera.id;
-      } else {
-        // Если ничего не нашли, берем первую доступную
-        cameraId = cameras[0].id;
-      }
-
+      cameraId = cameras[selectedIdx]?.id || cameras[0].id;
       selectedCameraId.value = cameraId;
       saveCameraAccess(cameraId);
     }
