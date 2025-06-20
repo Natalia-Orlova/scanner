@@ -515,7 +515,7 @@ const submitManualCode = () => {
 .scanner-area video {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Сохраняет пропорции видео */
+  object-fit: cover !important; /* Сохраняет пропорции видео */
 }
 
 .camera-controls {
