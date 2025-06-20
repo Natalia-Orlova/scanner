@@ -235,7 +235,7 @@ const startCameraScan = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: selectedCameraId.value ? { exact: selectedCameraId.value } : undefined,
-        facingMode: "environment",
+        facingMode: { exact: "environment" },
       },
     });
 
