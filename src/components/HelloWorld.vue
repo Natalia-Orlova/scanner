@@ -13,10 +13,8 @@
     </div>
 
     <div v-if="cameraActive" class="camera-view">
-      <div class="scan-box">
-         <div id="qr-scanner" class="scanner-area"></div>
-      </div>
-     
+      <video id="zxing-video" ref="videoElement" autoplay playsinline></video>
+      <div class="scan-box"></div>
       <div class="camera-controls">
         <div
           v-if="cameras.length > 1"
@@ -51,13 +49,11 @@
             :class="{ active: selectedCameraId === camera.id }"
           >
             <div class="camera-name">{{ getCameraName(camera) }}</div>
-            <div class="camera-details">
-              {{ getCameraDetails(camera) }}
-            </div>
+            <div class="camera-details">{{ getCameraDetails(camera) }}</div>
           </div>
         </div>
         <div class="modal-buttons">
-          <Button label="Отмена" @click="showCameraSelection = false" />
+          <button @click="showCameraSelection = false">Отмена</button>
         </div>
       </div>
     </div>
@@ -85,16 +81,18 @@
           @keyup.enter="submitManualCode"
         />
         <div class="modal-buttons">
-          <Button label="Отправить" @click="submitManualCode" :submit="true" />
+          <button @click="submitManualCode">Отправить</button>
         </div>
       </div>
     </div>
 
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-content">
-        <div class="modal-text">{{ modalMessage }}</div>
+        <div class="modal-text" :style="{ color: modalTextColor }">
+          {{ modalMessage }}
+        </div>
         <div class="modal-buttons">
-          <Button label="Ок" @click="showModal = false" :submit="true" />
+          <button @click="showModal = false">Ок</button>
         </div>
       </div>
     </div>
@@ -105,14 +103,15 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import { Html5Qrcode } from "html5-qrcode";
-import Button from "@/components/Button.vue";
+import { BrowserQRCodeReader } from "@zxing/library";
 
-// === Состояния ===
+// Импортируем библиотеку
+const codeReader = new BrowserQRCodeReader();
+
+// --- Состояния ---
 const CAMERA_PERMISSION_TIMEOUT = 5 * 60 * 1000;
 let cameraPermissionTimeout = null;
 
-const html5Qrcode = ref(null);
 const isScanning = ref(false);
 const showManualInput = ref(false);
 const manualCode = ref("");
@@ -124,13 +123,16 @@ const selectedCameraId = ref(null);
 const lastCameraAccess = ref(null);
 const fileError = ref("");
 const fileInput = ref(null);
+const videoElement = ref(null);
 const cameras = ref([]);
+const showModal = ref(false);
+const modalMessage = ref("");
+const modalTextColor = ref("#00c48c");
 const showCameraSelection = ref(false);
 
-
-onMounted(() => {
-  window.addEventListener("resize", handleResize);
-
+// --- Lifecycle ---
+onMounted(async () => {
+  await getCameras();
   const savedAccess = localStorage.getItem("cameraAccess");
   if (savedAccess) {
     const { cameraId, timestamp } = JSON.parse(savedAccess);
@@ -144,21 +146,11 @@ onMounted(() => {
 });
 
 onUnmounted(async () => {
-  window.removeEventListener("resize", handleResize);
-
   await stopScanner();
   if (cameraPermissionTimeout) clearTimeout(cameraPermissionTimeout);
 });
 
-const handleResize = async () => {
-  if (html5Qrcode.value?.isScanning) {
-    html5Qrcode.value.updateScannerConfig({
-      qrbox: { width: 250, height: 250 },
-    });
-  }
-};
-
-// === Функции работы с камерой ===
+// --- Функции работы с камерой ---
 const saveCameraAccess = (cameraId) => {
   const accessData = {
     cameraId,
@@ -176,48 +168,37 @@ const saveCameraAccess = (cameraId) => {
 
 const getCameras = async () => {
   try {
-    const availableCameras = await Html5Qrcode.getCameras();
-    cameras.value = availableCameras;
-    return availableCameras;
-  } catch (error) {
-    console.error("Ошибка получения камер:", error);
+    const devices = await codeReader.listVideoInputDevices();
+    cameras.value = devices;
+    return devices;
+  } catch (err) {
+    console.error("Ошибка получения камер:", err);
     return [];
   }
 };
 
 const getCameraName = (camera) => {
-  if (!camera.label) return "Камера";
-  
-  // Удаляем лишнюю информацию в скобках
-  let name = camera.label.replace(/\([^)]*\)/g, '').trim();
-  
-  // Упрощаем стандартные названия
-  if (name.includes('back') || name.toLowerCase().includes('rear')) {
+  let name = camera.label || "Камера";
+  name = name.replace(/\([^)]*\)/g, "").trim();
+  if (name.toLowerCase().includes("back") || name.toLowerCase().includes("rear")) {
     return "Основная камера";
-  } else if (name.includes('front')) {
+  } else if (name.toLowerCase().includes("front")) {
     return "Фронтальная камера";
   }
-  
-  return name || "Камера";
+  return name;
 };
 
 const getCameraDetails = (camera) => {
-  if (!camera.label) return "";
-  
-  // Извлекаем разрешение из названия камеры
   const resolutionMatch = camera.label.match(/\d+x\d+/);
   const resolution = resolutionMatch ? resolutionMatch[0] : "";
-  
-  // Определяем тип камеры (1x, 0.5x и т.д.)
   let cameraType = "";
-  if (camera.label.includes('0.5x') || camera.label.includes('ultrawide')) {
+  if (camera.label.includes("0.5x") || camera.label.includes("ultrawide")) {
     cameraType = "0.5x (широкоугольная)";
-  } else if (camera.label.includes('1x')) {
+  } else if (camera.label.includes("1x")) {
     cameraType = "1x (стандартная)";
-  } else if (camera.label.includes('2x') || camera.label.includes('telephoto')) {
+  } else if (camera.label.includes("2x") || camera.label.includes("telephoto")) {
     cameraType = "2x (телефото)";
   }
-  
   return [resolution, cameraType].filter(Boolean).join(" · ");
 };
 
@@ -225,8 +206,6 @@ const selectCamera = async (cameraId) => {
   selectedCameraId.value = cameraId;
   saveCameraAccess(cameraId);
   showCameraSelection.value = false;
-  
-  // Перезапускаем сканер с новой камерой
   await stopScanner();
   await startCameraScan();
 };
@@ -238,81 +217,30 @@ const startCameraScan = async () => {
     cameraActive.value = true;
     scanResult.value = "";
     torchActive.value = false;
-    
+
     await nextTick();
-    
-    if (!html5Qrcode.value) {
-      html5Qrcode.value = new Html5Qrcode("qr-scanner");
-    }
-    
 
-    const config = {
-      fps: 10,
-      qrbox: { width: 250, height: 250 },
-      disableFlip: true,
-      videoConstraints: {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: selectedCameraId.value ? { exact: selectedCameraId.value } : undefined,
         facingMode: "environment",
-        zoom: 1.0,
       },
-      formatsToSupport: [
-        Html5Qrcode.QR_CODE,
-        Html5Qrcode.AZTEC,
-        Html5Qrcode.CODE_128,
-        Html5Qrcode.DATA_MATRIX,
-      ],
-      ignoreIfStillFor: 2,
-    };
-    
-    // Получаем список доступных камер
-    const availableCameras = await getCameras();
-    let cameraId = selectedCameraId.value;
+    });
 
-    // Если камера не выбрана, пытаемся выбрать оптимальную
-    if (!cameraId && availableCameras.length > 0) {
-      // Сначала ищем тыльную камеру с максимальным разрешением
-      const rearCameras = availableCameras.filter(cam => 
-        cam.label.toLowerCase().includes('back') || 
-        cam.label.toLowerCase().includes('rear')
-      );
-      
-      if (rearCameras.length > 0) {
-        // Сортируем по разрешению (предполагая, что оно указано в названии)
-        rearCameras.sort((a, b) => {
-          const getResolution = (label) => {
-            const match = label.match(/\d+x\d+/);
-            if (!match) return 0;
-            const [w, h] = match[0].split('x').map(Number);
-            return w * h;
-          };
-          return getResolution(b.label) - getResolution(a.label);
-        });
-        
-        cameraId = rearCameras[0].id;
-      } else {
-        // Если тыльных камер нет, берем первую
-        cameraId = availableCameras[0].id;
-      }
-      
-      selectedCameraId.value = cameraId;
-      saveCameraAccess(cameraId);
+    if (videoElement.value) {
+      videoElement.value.srcObject = stream;
+      await new Promise((resolve) => (videoElement.value.onloadedmetadata = resolve));
+      videoElement.value.play();
     }
 
-    await html5Qrcode.value.start(
-      cameraId,
-      config,
-      onScanSuccess,
-      onScanFailure
+    // Начинаем сканирование
+    codeReader.decodeFromVideoDevice(
+      selectedCameraId.value,
+      "zxing-video",
+      onScanSuccess
     );
-
-    // Проверка поддержки фонарика
-    try {
-      const hasFlash = await html5Qrcode.value.hasFlashSupport();
-      torchSupported.value = hasFlash;
-    } catch {
-      torchSupported.value = false;
-    }
   } catch (err) {
-    console.error("Ошибка камеры:", err);
+    console.error("Ошибка запуска камеры:", err);
     showManualInput.value = true;
     stopScanner();
   } finally {
@@ -321,36 +249,36 @@ const startCameraScan = async () => {
 };
 
 const stopScanner = async () => {
-  if (html5Qrcode.value?.isScanning) {
-    try {
-      if (torchActive.value) {
-        await html5Qrcode.value.turnOffFlash();
-      }
-      await html5Qrcode.value.stop();
-    } catch (err) {
-      console.error("Ошибка остановки сканера:", err);
-    }
+  if (codeReader) codeReader.reset();
+  if (videoElement.value && videoElement.value.srcObject) {
+    const stream = videoElement.value.srcObject;
+    const tracks = stream.getTracks();
+    tracks.forEach((track) => track.stop());
+    videoElement.value.srcObject = null;
   }
   cameraActive.value = false;
-  torchActive.value = false;
 };
 
 const toggleTorch = async () => {
-  if (!html5Qrcode.value || !torchSupported.value) return;
+  if (!torchSupported.value) return;
+  const track = videoElement.value?.srcObject?.getVideoTracks()[0];
+  if (!track) return;
+
   try {
-    if (torchActive.value) {
-      await html5Qrcode.value.turnOffFlash();
-    } else {
-      await html5Qrcode.value.turnOnFlash();
+    const capabilities = track.getCapabilities();
+    if (capabilities.torch) {
+      torchActive.value = !torchActive.value;
+      await track.applyConstraints({
+        advanced: [{ torch: torchActive.value }],
+      });
     }
-    torchActive.value = !torchActive.value;
   } catch (err) {
-    console.error("Ошибка фонарика:", err);
+    console.error("Ошибка управления фонариком:", err);
     torchSupported.value = false;
   }
 };
 
-// === Сканирование файла ===
+// --- Загрузка файла ---
 const triggerFileInput = () => {
   fileInput.value.click();
 };
@@ -358,26 +286,16 @@ const triggerFileInput = () => {
 const handleFileUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
-
   try {
     isScanning.value = true;
     scanResult.value = "";
     fileError.value = "";
 
-    // Создаём временный контейнер
-    const tempScannerDiv = document.createElement("div");
-    tempScannerDiv.id = "qr-scanner";
-    tempScannerDiv.style.display = "none";
-    document.body.appendChild(tempScannerDiv);
+    const img = await loadImageFromFile(file);
+    const result = await codeReader.decodeFromImage(undefined, img);
 
-    const html5QrCodeReader = new Html5Qrcode("qr-scanner");
-    const decodedText = await html5QrCodeReader.scanFile(file, false);
-
-    // Убираем временный элемент
-    document.body.removeChild(tempScannerDiv);
-
-    if (decodedText) {
-      onScanSuccess(decodedText);
+    if (result) {
+      onScanSuccess(result.text);
     } else {
       fileError.value = "QR-код не найден на изображении.";
       showManualInput.value = true;
@@ -392,38 +310,41 @@ const handleFileUpload = async (event) => {
   }
 };
 
-let isProcessing = false;
+const loadImageFromFile = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
+// --- Обработка результатов ---
+let isProcessing = false;
 const onScanSuccess = async (decodedText) => {
   if (isProcessing) return;
   isProcessing = true;
-
   scanResult.value = decodedText;
-  const normalizedCode = decodedText.trim().toLowerCase();
-
   showModal.value = true;
   modalMessage.value = `Отсканирован QR-код:\n${decodedText}`;
   modalTextColor.value = "#00c48c";
-
   stopScanner();
   setTimeout(() => {
     isProcessing = false;
   }, 2000);
 };
 
-const onScanFailure = (errorMessage) => {
-  console.warn(`Ошибка сканирования: ${errorMessage}`);
-};
-
-// === Ручной ввод ===
+// --- Ручной ввод ---
 const submitManualCode = () => {
   const inputCode = manualCode.value.trim();
   if (!inputCode) return;
-
   showModal.value = true;
   modalMessage.value = `Введён код:\n${inputCode}`;
   modalTextColor.value = "#00c48c";
-
   showManualInput.value = false;
   manualCode.value = "";
 };
@@ -435,14 +356,12 @@ const submitManualCode = () => {
   margin: 0 auto;
   padding: 20px;
 }
-
 .scanner-controls {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
 }
-
 .scanner-controls div {
   width: 100%;
   padding: 2vw 4vw;
@@ -455,12 +374,10 @@ const submitManualCode = () => {
   line-height: 109%;
   user-select: none;
 }
-
 .scanner-controls div.disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .camera-view {
   position: fixed;
   top: 0;
@@ -472,45 +389,21 @@ const submitManualCode = () => {
   display: flex;
   flex-direction: column;
 }
-
+#zxing-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .scan-box {
   width: 80vw;
   height: 80vw;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.scanner-area {
-  flex-grow: 1;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.scanner-area::before {
-  content: "";
-  display: block;
-  padding-top: 100%; /* Сохраняет соотношение сторон 1:1 */
-  position: relative;
-}
-
-#qr-scanner {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden; /* Предотвращает растягивание */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px dashed #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
-
-.scanner-area video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover !important; /* Сохраняет пропорции видео */
-}
-
 .camera-controls {
   display: flex;
   justify-content: center;
@@ -518,7 +411,6 @@ const submitManualCode = () => {
   padding: 15px;
   background: rgba(0, 0, 0, 0.7);
 }
-
 .control-button {
   padding: 10px 20px;
   background: rgba(255, 255, 255, 0.2);
@@ -526,15 +418,12 @@ const submitManualCode = () => {
   border-radius: 20px;
   cursor: pointer;
 }
-
 .control-button.active {
   background: rgba(255, 255, 255, 0.4);
 }
-
 .close-button {
   background: rgba(255, 68, 68, 0.8);
 }
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -547,7 +436,6 @@ const submitManualCode = () => {
   justify-content: center;
   z-index: 1001;
 }
-
 .modal-content {
   background: white;
   padding: 20px;
@@ -556,42 +444,34 @@ const submitManualCode = () => {
   max-width: 400px;
   text-align: center;
 }
-
 .modal-content.camera-selection {
   max-width: 90%;
   width: 90%;
 }
-
 .camera-list {
   max-height: 60vh;
   overflow-y: auto;
   margin: 15px 0;
 }
-
 .camera-item {
   padding: 12px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
 }
-
 .camera-item:hover {
   background-color: #f5f5f5;
 }
-
 .camera-item.active {
   background-color: #e0f7fa;
 }
-
 .camera-name {
   font-weight: bold;
   margin-bottom: 4px;
 }
-
 .camera-details {
   font-size: 0.9em;
   color: #666;
 }
-
 .modal-text {
   white-space: pre-wrap;
   text-align: center;
@@ -599,7 +479,6 @@ const submitManualCode = () => {
   color: v-bind('modalTextColor || "inherit"');
   font-size: 20px;
 }
-
 .modal-content input {
   width: 100%;
   margin: 15px 0;
@@ -608,39 +487,9 @@ const submitManualCode = () => {
   border-radius: 8px;
   font-size: 16px;
 }
-
 .file-error {
   color: red;
   margin-top: 10px;
   text-align: center;
-}
-
-.scan-result {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f0f8ff;
-  border-radius: 8px;
-  border: 1px solid #d0e0ff;
-  text-align: center;
-}
-
-.scan-result h3 {
-  margin-top: 0;
-  color: #0066cc;
-}
-
-@media (min-width: 768px) or (orientation: landscape) {
-  .scanner-controls div {
-    width: 100%;
-    padding: 8px 16px;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-light);
-    margin-bottom: 32px;
-    font-family: RoobertBold, sans-serif;
-    font-size: 38px;
-    line-height: 109%;
-    user-select: none;
-  }
 }
 </style>
