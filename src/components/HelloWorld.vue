@@ -13,10 +13,13 @@
     </div>
 
     <div v-if="cameraActive" class="camera-view">
-      <div id="qr-scanner" class="scanner-area"></div>
+      <div class="scan-box">
+         <div id="qr-scanner" class="scanner-area"></div>
+      </div>
+     
       <div class="camera-controls">
         <div
-          v-if="cameras.length >= 1"
+          v-if="cameras.length > 1"
           class="control-button"
           @click="showCameraSelection = true"
         >
@@ -475,6 +478,13 @@ const submitManualCode = () => {
   z-index: 1000;
   display: flex;
   flex-direction: column;
+}
+
+.scan-box {
+  width: 80vw;
+  height: 80vw;
+  margin: 0 auto;
+  overflow: hidden;
 }
 
 .scanner-area {
