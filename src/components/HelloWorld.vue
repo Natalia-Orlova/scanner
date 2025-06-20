@@ -103,6 +103,8 @@ const props = {
 };
 
 onMounted(() => {
+  window.addEventListener("resize", handleResize);
+
   const savedAccess = localStorage.getItem("cameraAccess");
   if (savedAccess) {
     const { cameraId, timestamp } = JSON.parse(savedAccess);
@@ -116,9 +118,21 @@ onMounted(() => {
 });
 
 onUnmounted(async () => {
+   window.removeEventListener("resize", handleResize);
+
   await stopScanner();
   if (cameraPermissionTimeout) clearTimeout(cameraPermissionTimeout);
 });
+
+const handleResize = async () => {
+  if (html5Qrcode.value?.isScanning) {
+    const viewportWidth = Math.min(window.innerWidth, window.innerHeight) - 40;
+    const qrboxSize = Math.min(viewportWidth, props.qrbox);
+    html5Qrcode.value.updateScannerConfig({
+      qrbox: { width: qrboxSize, height: qrboxSize },
+    });
+  }
+};
 
 // === Функции работы с камерой ===
 const saveCameraAccess = (cameraId) => {
