@@ -60,7 +60,7 @@
 
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-content">
-        <div class="modal-text">{{modalMessage}}</div>
+        <div class="modal-text">{{ modalMessage }}</div>
         <div class="modal-buttons">
           <Button label="Ок" @click="showModal = false" :submit="true" />
         </div>
@@ -95,7 +95,7 @@ const fileInput = ref(null);
 
 const showModal = ref(false);
 const modalMessage = ref("");
-const modalTextColor = ref('');
+const modalTextColor = ref("");
 
 const props = {
   qrbox: 250,
@@ -168,6 +168,11 @@ const startCameraScan = async () => {
       disableFlip: true,
       videoConstraints: {
         facingMode: "environment",
+        zoom: 1.0,
+        advanced: [
+          { zoom: 1.0 },
+          { width: { exact: 1920 }, height: { exact: 1080 } },
+        ],
       },
       formatsToSupport: [
         Html5Qrcode.QR_CODE,
@@ -175,15 +180,21 @@ const startCameraScan = async () => {
         Html5Qrcode.CODE_128,
         Html5Qrcode.DATA_MATRIX,
       ],
-      ignoreIfStillFor: 2
+      ignoreIfStillFor: 2,
     };
 
     const cameras = await getCameras();
     let cameraId = selectedCameraId.value;
 
     if (!cameraId && cameras.length > 0) {
-      cameraId =
-        cameras.find((c) => c.label.includes("back"))?.id || cameras[0].id;
+      const backCamera = cameras.find((c) => c.label.includes("back"));
+
+      if (backCamera) {
+        cameraId = backCamera.id;
+      } else {
+        cameraId = cameras[0].id;
+      }
+
       selectedCameraId.value = cameraId;
       saveCameraAccess(cameraId);
     }
@@ -294,7 +305,7 @@ const onScanSuccess = async (decodedText) => {
 
   showModal.value = true;
   modalMessage.value = `Отсканирован QR-код:\n${decodedText}`;
-  modalTextColor.value = '#00c48c';
+  modalTextColor.value = "#00c48c";
 
   stopScanner();
   setTimeout(() => {
@@ -313,7 +324,7 @@ const submitManualCode = () => {
 
   showModal.value = true;
   modalMessage.value = `Введён код:\n${inputCode}`;
-  modalTextColor.value = '#00c48c';
+  modalTextColor.value = "#00c48c";
 
   showManualInput.value = false;
   manualCode.value = "";
@@ -437,7 +448,6 @@ const submitManualCode = () => {
   max-width: 400px;
   text-align: center;
 }
-
 
 .modal-text {
   white-space: pre-wrap;
