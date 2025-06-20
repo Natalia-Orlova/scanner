@@ -183,7 +183,7 @@ const startCameraScan = async () => {
 
     if (!cameraId && cameras.length > 0) {
       // Пытаемся выбрать камеру с ID "0"
-      const primaryBackCamera = cameras.find((c) => c.id === "camera2 0");
+      const primaryBackCamera = cameras.find((c) => c.id === "camera2 2");
 
       if (primaryBackCamera) {
         cameraId = primaryBackCamera.id;
